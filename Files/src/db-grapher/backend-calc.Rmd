@@ -11,31 +11,151 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## R Markdown
+```{r}
+#region-con <- read_csv("Files/data/euc-m.csv")
+```
 
 ```{r import-data-packages}
 library(tidyverse)
 library(shiny)
-library(xlsx)
+library(readxl)
+```
 
 ```
 
-## Including Plots
+```
+   region-con <- read.xlsx(
+      paste(
+      "Files/data/euc-",
+      substr(input$what-region,1,1),
+      ".xlsx",
+      sep =""),
+      sheetName = "Btu")
+    
+    region-exp <-  read.xlsx(
+      paste(
+      "Files/data/eue-",
+       substr(input$what-region,1,1),
+       ".xlsx",
+      sep =""),
+      sheetName = "dollars")
+```
+
+Do you have solar, if so how mcuh in kwh 
+What kind of water heater (gas, electric, hybrid electric, solar)
+What kind of heating (electic, gas)
+What kind of lighting (LED vs Incandescent)
+What kind of car (Electric vs ICE)
+
+```{r calculators}
+environ-calc <- function(region, subregion, urban, climate, housingtype, sqft, rent, yearcst, hshld, income, included_in_rent, heating_fuel) {
+  
+}
+
+##Calculates the overall p
+calc_pricept <- function(gas_items, elec_items) {
+  gasoline_car = TRUE
+  
+  return (0.20*gas_items+0.15*elec_items)/2
+}
+
+calc_num <- function(items) {
+  
+}
+
+pointarrbaseline <- c();
+pointarrimproved <- c();
+
+
+fin-calc <- function(userSalary, currEn, pricePt, year) {
+  while (year <= 2050) {
+    point = userSalary - (pricePt*currEn)*0.15*year/10 
+    
+    pointarrbaseline.append(point)
+    
+    pricePt = pricePt*0.15*year/10
+  }
+}
+
+
+```
 
 You can also embed plots, for example:
 
-```{r shiny-io, echo=FALSE}
+```{r shiny-io, echo=TRUE}
 ui <- fluidPage(
-  numericInput("salary", label = "", value = 0),
-  numericInput("want-to-spend", label = "", value = 0),
-  selectInput("what-region", 
-              label = "What Region are you From?",
-              choices = c("Northeast","Midwest","South","West"))
-
+  titlePanel("Test Page"),
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("salary", 
+                   
+                   label = "What is your annual estimated salary?",
+                   value = 50000,
+                   min = 10000,
+                   max = 900000,
+                   step = 5000),
+      
+      selectInput("want-to-spend", 
+                   
+                  label = "What percentage of your income
+                   do you see yourself comfortably spending?", 
+                   
+                  choices = c(
+                     "5 percent",
+                     "10 percent",
+                     "15 percent",
+                     "25 percent",
+                     "I'm all in! (up to 75 percent)"
+                     )
+                  
+                   ), 
+      selectInput("what-region", 
+                  label = "In what region of the U.S. do you currently
+                  live?",
+                  choices = c("Northeast","Midwest","South","West")
+                  ),
+      selectInput("what-car",
+                  label = "Do you have a car? If so, gasoline, electric
+                  or hybrid",
+                  choices = c(
+                    "No car", "Gasoline", "Electric","Hybrid","solar")),
+      selectInput("what-heater",
+                  label = "Do you have an electric water heater, or gas?",
+                  choices = c("Electric", "Gas","Hybrid")),
+      selectInput("what-lighting",
+                  label = "What kind of lights do you have, for the most part?",
+                  choices = c("Incandescent","LED")),
+                  )
+      ),
+    
+  mainPanel(
+    plotOutput("finance_plot"),
+    textOutput("info"),
+    tags$a(
+      href = "https://www.eia.gov/consumption/residential/index.php",
+      "Source: EIA",
+      target = "_blank"
+      )
+  )
 )
 server <- function(input, output) {
+  
+ # us_con <- read_xlsx("Files/data/euc-us.xlsx", sheet = "Btu", range = "A")
+  
+ # us_exp <- read_xlsx("Files/data/eue-us.xlsx", sheet = "dollars", range = "A4:N93", col_names = TRUE, .name_repair = "unique") %>%
+ # pivot_longer(cols = -"...1", names_to = '...1')
+  
+  output$finance_plot <- renderPlot({
+    calc_pricept("what")
+    color = "black"
+    ggplot(test_tibble, aes(x = random_times, y = random_nums)) +
+      geom_point()
+  })
+
 }
 
 shinyApp(ui = ui, server = server)
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
