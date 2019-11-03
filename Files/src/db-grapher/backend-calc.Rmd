@@ -10,22 +10,25 @@ runtime: shiny
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-```{r}
-#region-con <- read_csv("Files/data/euc-m.csv")
-```
-
 ```{r import-data-packages}
 library(tidyverse)
 library(shiny)
 library(readxl)
 library(knitr)
+
+```
+
+---
+
+```{r test_tibble}
+users = sample(c("Sally","John","Davis","Monica","Bianca","Lee","Mindy","Thurgood","Ruth","Billy"))
+regions = sample(c("Midwest","South","Northeast", "West"), 10, replace = T)
+
+test_tibble = tibble(users,regions)
 ```
 
 ```{r calculators}
 environ_calc <- function(region, subregion, urban, climate, housingtype, sqft, rent, yearcst, hshld, income, included_in_rent, heating_fuel){}
-
-##Calculates the overall pricept in kwh
 
 calc_pricept <- function(gas_items, elec_items) {
   return(3412.142*(0.20*gas_items+0.15*elec_items)/2)
@@ -43,6 +46,35 @@ fin_calc <- function(userSalary, currEn, pricePt, year) {
     i = i + 1
   }
   return(pointarr)
+}
+
+gas_elec_calc <- function(what_car, what_heater, what_lighting) {
+    gas_items = 0
+    elec_items = 0
+    gasoline_car = FALSE
+    
+    if(what_car == "Gasoline") {
+      gas_items = gas_items + 2
+    } else if(what_car == "Hybrid") {
+      gas_items = gas_items + 0.5
+      elec_items = elec_items + 0.5
+    }
+    
+    if(what_heater == "Electric") {
+      elec_items = elec_items + 1
+    } else if(what_heater == "Gas") {
+      gas_items = gas_items + 1
+    } else {
+      elec_items = elec_items + 0.5
+    }
+    
+    if(what_lighting == "Incadescent") {
+      elec_items = elec_items + 1
+    } else {
+      elec_items = elec_items + 0.5
+    }
+    
+    return (c(gas_items, elec_items))
 }
 
 ```
@@ -119,41 +151,19 @@ server <- function(input, output) {
 
   output$finance_plot <- renderPlot({
     
-    gas_items = 0
-    elec_items = 0
-    gasoline_car = FALSE
+    items <- gas_elec_calc(input$what_car, input$what_heater, input$what_lighting)
     
-    if(input$what_car == "Gasoline") {
-      gasoline = TRUE
-    } else if(input$what_car == "Hybrid") {
-      gas_items = gas_items + 0.5
-      elec_items = elec_items + 0.5
-    }
+    pricePt = calc_pricept(items[1], items[2])
     
-    if(input$what_heater == "Electric") {
-      elec_items = elec_items + 1
-    } else if (input$what_heater == "Gas") {
-      gas_items = gas_items + 1
-    } else {
-      elec_items = elec_items + 0.5
-    }
-    
-    if(input$what_lighting == "Incadescent") {
-      elec_items = elec_items + 1
-    } else {
-      elec_items = elec_items + 0.5
-    }
-  
-    pricePt = calc_pricept(gas_items, elec_items)
     currEn = pricePt*input$current_bill
     yeararr <- c(2010:2050)
     pointarr <- fin_calc(input$userSalary, currEn, pricePt, yeararr[1])
     
-    test_tibble <- tibble(yeararr, pointarr)
-    test_tibble %>%
-    plot(yeararr, pointarr, type = "l")
-  })
+    ggplot(tibble(yeararr, pointarr), aes(yeararr, pointarr)) +
+      geom_point()
+
   
+})
 }
 
 shinyApp(ui = ui, server = server)
