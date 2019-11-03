@@ -21,10 +21,31 @@ library(knitr)
 ---
 
 ```{r test_tibble}
-users = sample(c("Sally","John","Davis","Monica","Bianca","Lee","Mindy","Thurgood","Ruth","Billy"))
-regions = sample(c("Midwest","South","Northeast", "West"), 10, replace = T)
 
-test_tibble = tibble(users,regions)
+numsamples = 2000
+
+regions = sample(c("Midwest","South","Northeast", "West"), numsamples, replace = T)
+
+monthly_bill = sample(1000, size = numsamples, replace = T)
+
+salary = sample(100000, size = numsamples, replace = T)
+
+price_elec = sample(0.50, size = numsamples, replace = T)
+
+housingtype = sample(c("Single-Family Detached", "Apartment 2-4", "Apartment 5 or more", "Mobile", "Single-Family Attached"), numsamples, replace = T)
+
+climate = sample(c("Very Cold","Mixed-humid","Mixed-dry","Hot-humid","Marine"), numsamples, replace = T)
+
+ownership = sample(c("Rented","Owned"), numsamples, replace = T)
+
+heating_fuel = sample(c("gas","electric"), numsamples, replace = T)
+
+test_tibble = tibble(regions, salary, monthly_bill, price_elec, housingtype, climate, ownership, heating_fuel)
+
+test_tibble <- test_tibble %>%
+  mutate(currEn = monthly_bill/price_elec)
+
+
 ```
 
 ```{r calculators}
@@ -35,9 +56,12 @@ calc_pricept <- function(gas_items, elec_items) {
 }
 
 fin_calc <- function(userSalary, currEn, pricePt, year) {
+  
   pointarr = c()
   i = 0
+  
   while(year <= 2050){
+    
     point = userSalary - (pricePt*currEn)*0.15*year/10 
     
     pointarr[i] <- point
@@ -149,24 +173,43 @@ ui <- fluidPage(
 
 server <- function(input, output) {
 
-  output$finance_plot <- renderPlot({
-    
-    items <- gas_elec_calc(input$what_car, input$what_heater, input$what_lighting)
-    
-    pricePt = calc_pricept(items[1], items[2])
-    
-    currEn = pricePt*input$current_bill
-    yeararr <- c(2010:2050)
-    pointarr <- fin_calc(input$userSalary, currEn, pricePt, yeararr[1])
-    
-    ggplot(tibble(yeararr, pointarr), aes(yeararr, pointarr)) +
-      geom_point()
+  # output$finance_plot <- reactivePlot({
+  #   
+  #   items <- reactive(
+  #     gas_elec_calc(reactive(input$what_car),
+  #                   reactive(input$what_heater),
+  #                   reactive(input$what_lighting)
+  #                   )
+  #     )
+  #   
+  #   pricePt = reactive(calc_pricept(items[1], items[2]))
+  #   
+  #   currEn = reactive(reactive(pricePt)*reactive(input$current_bill))
+  #   yeararr <- c(2010:2050)
+  #   
+  #   pointarr <- reactive(
+  #     fin_calc(reactive(input$userSalary),
+  #              currEn,
+  #              pricePt,
+  #              yeararr[1])
+  #   )
+  #   
+  #   tibble2 = tibble(yeararr, pointarr)
+  #   
+  #   ggplot(tibble2, aes(yeararr, pointarr)) +
+  #     geom_point()
 
-  
-})
+  output$finance_plot <- renderPlot({
+    test_tibble %>%
+    filter(regions == input$what_region,
+           salary >= input$salary - 5000 || salary <= input$salary + 5000) %>%
+    ggplot(aes(x = heating_fuel, y = monthly_bill, fill = ownership)) +
+      geom_bar(stat = "identity")
+  })
 }
 
-shinyApp(ui = ui, server = server)
+
+shinyApp(ui, server)
 
 ```
 
