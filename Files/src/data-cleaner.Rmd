@@ -1,0 +1,70 @@
+---
+title: "data-cleaner"
+author: "Beck Addison"
+date: "11/3/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages}
+library(tidyverse)
+```
+
+```{r cleaning-functions}
+subsetdata <- function(df) {
+  for (row1 in 1:nrow(df)) {
+    
+    header <- df[row1,1]
+    
+    rest <- df[row1, -1]
+    
+    if (rowSums(is.na(rest)) == length(rest)) {
+      
+      division <- header
+      
+      div_title <- paste(toString(header),substr(df, start = 11, stop = length(toString(df)),sep = "-"))
+      
+      subheaders = c()
+      
+      for (row2 in row1:nrow(df)) {
+        
+        subheader <- df[row2,1]
+        
+        subrest <- df[row2, -1]
+        
+        if (rowSums(is.na(subrest)) == length(subrest)) {
+          
+          endofdf <- row2+row1-1
+          
+            ndf <- data.frame(df[row1:endofdf])
+            write_csv(ndf, paste("/Files/data/",div_title, sep = ""))
+          
+          break
+        }
+      }
+    }
+  }
+}
+```
+
+```{r import}
+
+files = list.files("Files/data/", pattern = ".xlsx")
+
+for (file in files) {
+  
+  raw_data <- read_xlsx(
+    paste("Files/data/", file, sep = ""),
+    skip = 3,
+    col_names = TRUE,
+    na = "")
+  
+  subsetdata(raw_data)
+}
+
+```
+
+
