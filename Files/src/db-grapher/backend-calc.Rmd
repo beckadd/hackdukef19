@@ -1,0 +1,173 @@
+---
+title: "backend-calculator"
+author: "Beck Addison"
+date: "11/2/2019"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r import-data-packages}
+library(tidyverse)
+library(shiny)
+library(readxl)
+library(knitr)
+
+```
+
+---
+
+```{r test_tibble}
+users = sample(c("Sally","John","Davis","Monica","Bianca","Lee","Mindy","Thurgood","Ruth","Billy"))
+regions = sample(c("Midwest","South","Northeast", "West"), 10, replace = T)
+
+test_tibble = tibble(users,regions)
+```
+
+```{r calculators}
+environ_calc <- function(region, subregion, urban, climate, housingtype, sqft, rent, yearcst, hshld, income, included_in_rent, heating_fuel){}
+
+calc_pricept <- function(gas_items, elec_items) {
+  return(3412.142*(0.20*gas_items+0.15*elec_items)/2)
+}
+
+fin_calc <- function(userSalary, currEn, pricePt, year) {
+  pointarr = c()
+  i = 0
+  while(year <= 2050){
+    point = userSalary - (pricePt*currEn)*0.15*year/10 
+    
+    pointarr[i] <- point
+    
+    pricePt = pricePt*0.15*year/10
+    i = i + 1
+  }
+  return(pointarr)
+}
+
+gas_elec_calc <- function(what_car, what_heater, what_lighting) {
+    gas_items = 0
+    elec_items = 0
+    gasoline_car = FALSE
+    
+    if(what_car == "Gasoline") {
+      gas_items = gas_items + 2
+    } else if(what_car == "Hybrid") {
+      gas_items = gas_items + 0.5
+      elec_items = elec_items + 0.5
+    }
+    
+    if(what_heater == "Electric") {
+      elec_items = elec_items + 1
+    } else if(what_heater == "Gas") {
+      gas_items = gas_items + 1
+    } else {
+      elec_items = elec_items + 0.5
+    }
+    
+    if(what_lighting == "Incadescent") {
+      elec_items = elec_items + 1
+    } else {
+      elec_items = elec_items + 0.5
+    }
+    
+    return (c(gas_items, elec_items))
+}
+
+```
+
+You can also embed plots, for example:
+
+```{r shiny-io, echo=TRUE}
+
+ui <- fluidPage(
+  titlePanel("Test Page"),
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("salary", 
+                   
+                   label = "What is your annual estimated salary?",
+                   value = 50000,
+                   min = 10000,
+                   max = 900000,
+                   step = 5000),
+      numericInput("current_bill",
+                   label = "What is your current energy bill?",
+                   value = 100,
+                   min = 0,
+                   max = 1000),
+  
+      selectInput("want_to_spend", 
+                   
+                  label = "What percentage of your income
+                   do you see yourself comfortably spending?", 
+                   
+                  choices = c(
+                     "5 percent",
+                     "10 percent",
+                     "15 percent",
+                     "25 percent",
+                     "I'm all in! (up to 75 percent)"
+                     )
+                   ),
+      
+      selectInput("what_region", 
+                  label = "In what region of the U.S. do you currently
+                  live?",
+                  choices = c("Northeast","Midwest","South","West")
+                  ),
+      
+      selectInput("what_car",
+                  label = "Do you have a car? If so, gasoline, electric
+                  or hybrid",
+                  choices = c(
+                    "No car", "Gasoline", "Electric","Hybrid")),
+      
+      selectInput("what_heater",
+                  label = "Do you have an electric water heater, or gas?",
+                  choices = c("Electric", "Gas","Hybrid Electric")),
+      
+      selectInput("what_lighting",
+                  label = "What kind of lights do you have, for the most   part?",
+                  choices = c("Incandescent","LED")),
+                  ),
+    
+  mainPanel(
+    plotOutput("finance_plot"),
+    textOutput("info"),
+    tags$a(
+      href = "https://www.eia.gov/consumption/residential/index.php",
+      "Source: EIA",
+      target = "_blank"
+      )
+    )
+  )
+)
+
+server <- function(input, output) {
+
+  output$finance_plot <- renderPlot({
+    
+    items <- gas_elec_calc(input$what_car, input$what_heater, input$what_lighting)
+    
+    pricePt = calc_pricept(items[1], items[2])
+    
+    currEn = pricePt*input$current_bill
+    yeararr <- c(2010:2050)
+    pointarr <- fin_calc(input$userSalary, currEn, pricePt, yeararr[1])
+    
+    ggplot(tibble(yeararr, pointarr), aes(yeararr, pointarr)) +
+      geom_point()
+
+  
+})
+}
+
+shinyApp(ui = ui, server = server)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
