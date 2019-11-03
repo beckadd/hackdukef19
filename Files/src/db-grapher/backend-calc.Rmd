@@ -22,25 +22,25 @@ library(knitr)
 
 ```{r test_tibble}
 
-users = sample(c("Sally","John","Davis","Monica","Bianca","Lee","Mindy","Thurgood","Ruth","Billy"))
+numsamples = 2000
 
-regions = sample(c("Midwest","South","Northeast", "West"), 10, replace = T)
+regions = sample(c("Midwest","South","Northeast", "West"), numsamples, replace = T)
 
-monthly_bill = sample(c(250, 300, 350, 150, 100, 155), 10, replace = T)
+monthly_bill = sample(1000, size = numsamples, replace = T)
 
-salary = sample(c(24000, 56000, 125000, 92000, 75000, 50200), 10, replace = T)
+salary = sample(100000, size = numsamples, replace = T)
 
-price_elec = sample(c(0.15, 0.05, 0.45, 0.25, 0.30), 10, replace = T)
+price_elec = sample(0.50, size = numsamples, replace = T)
 
-housingtype = sample(c("Single-Family Detached", "Apartment 2-4", "Apartment 5 or more", "Mobile", "Single-Family Attached"), 10, replace = T)
+housingtype = sample(c("Single-Family Detached", "Apartment 2-4", "Apartment 5 or more", "Mobile", "Single-Family Attached"), numsamples, replace = T)
 
-climate = sample(c("Very Cold","Mixed-humid","Mixed-dry","Hot-humid","Marine"), 10, replace = T)
+climate = sample(c("Very Cold","Mixed-humid","Mixed-dry","Hot-humid","Marine"), numsamples, replace = T)
 
-ownership = sample(c("Rented","Owned"), 10, replace = T)
+ownership = sample(c("Rented","Owned"), numsamples, replace = T)
 
-heating_fuel = sample(c("gas","electric"), 10, replace = T)
+heating_fuel = sample(c("gas","electric"), numsamples, replace = T)
 
-test_tibble = tibble(users, regions, salary, monthly_bill, price_elec, housingtype, climate, ownership, heating_fuel)
+test_tibble = tibble(regions, salary, monthly_bill, price_elec, housingtype, climate, ownership, heating_fuel)
 
 test_tibble <- test_tibble %>%
   mutate(currEn = monthly_bill/price_elec)
@@ -173,7 +173,7 @@ ui <- fluidPage(
 
 server <- function(input, output) {
 
-  # output$finance_plot <- renderPlot({
+  # output$finance_plot <- reactivePlot({
   #   
   #   items <- reactive(
   #     gas_elec_calc(reactive(input$what_car),
@@ -200,8 +200,11 @@ server <- function(input, output) {
   #     geom_point()
 
   output$finance_plot <- renderPlot({
-    ggplot(test_tibble, aes(x = ownership, y = currEn)) +
-      geom_boxplot()
+    test_tibble %>%
+    filter(regions == input$what_region,
+           salary >= input$salary - 5000 || salary <= input$salary + 5000) %>%
+    ggplot(aes(x = heating_fuel, y = monthly_bill, fill = ownership)) +
+      geom_bar(stat = "identity")
   })
 }
 

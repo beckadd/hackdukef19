@@ -39,10 +39,8 @@ subsetdata <- function(df) {
           
           endofdf <- row2+row1-1
           
-            assign(
-            div_title, 
-            data.frame(df[row1:endofdf])
-            )
+            ndf <- data.frame(df[row1:endofdf])
+            write_csv(ndf, paste("/Files/data/",div_title, sep = ""))
           
           break
         }
