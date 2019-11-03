@@ -382,33 +382,36 @@ summary {
   for (row1 in 1:nrow(df)) {
     
     header &lt;- df[row1,1]
+    
     rest &lt;- df[row1, -1]
     
     if (rowSums(is.na(rest)) == length(rest)) {
       
       division &lt;- header
-      div_title &lt;- toString(header)+substr(df, start = 11, stop = length(toString(df)))
+      
+      div_title &lt;- paste(toString(header),substr(df, start = 11, stop = length(toString(df)),sep = &quot;-&quot;))
+      
       subheaders = c()
       
       for (row2 in row1:nrow(df)) {
         
         subheader &lt;- df[row2,1]
-        subheaders &lt;- c(subheaders, subheader)
         
         subrest &lt;- df[row2, -1]
         
         if (rowSums(is.na(subrest)) == length(subrest)) {
+          
           endofdf &lt;- row2+row1-1
-          assign(
+          
+            assign(
             div_title, 
             data.frame(df[row1:endofdf])
-          )
+            )
+          
           break
         }
       }
-
-  }
-  
+    }
   }
 }</code></pre>
 <pre class="r"><code>files = list.files(&quot;Files/data/&quot;, pattern = &quot;.xlsx&quot;)
@@ -417,7 +420,9 @@ for (file in files) {
   
   raw_data &lt;- read_xlsx(
     paste(&quot;Files/data/&quot;, file, sep = &quot;&quot;),
-    skip = 3)
+    skip = 3,
+    col_names = TRUE,
+    na = &quot;&quot;)
   
   subsetdata(raw_data)
   
